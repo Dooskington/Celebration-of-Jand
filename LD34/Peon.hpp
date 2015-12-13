@@ -15,30 +15,40 @@ public:
     void Clean();
 
     void MoveTo(Vector2D dest);
+    void Respawn();
 
     void IdleState();
     void WalkingState();
-    void ChoppingState();
+    void GatheringState();
+    void SacrificeState();
 
 public:
-    bool move;
     Vector2D dest;
 
+    bool m_isWandering = false;
     double walkSpeed = 32;
     double runSpeed = 64;
+    double speedVariation = 0;
 
-    enum State { IDLE, WALKING, CHOPPING };
+    enum State { IDLE, WALKING, GATHERING, SACRIFICE };
     State m_state;
 
     Bonfire* m_bonfire;
-    Tree* m_tree;
+    GameObject* m_targetResource;
+    std::string m_lastResource;
 
     int soundDelay;
-    Timer m_chopTimer;
+    Timer m_gatherTimer;
+    int waitTime;
+    Timer m_idleTimer;
     int m_resources;
-    bool m_hasLogs = false;
+
+    double hopOffset;
+    double hopIndex;
+    double hopAmp = 3;
+    double hopFreq;
 
 private:
     typedef void (Peon::*stateFunction)();
-    stateFunction m_stateHandler[3];
+    stateFunction m_stateHandler[5];
 };

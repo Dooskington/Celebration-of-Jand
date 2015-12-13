@@ -120,6 +120,7 @@
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Peon.cpp" />
+    <ClCompile Include="Stone.cpp" />
     <ClCompile Include="Timer.cpp" />
     <ClCompile Include="Tree.cpp" />
     <ClCompile Include="Vector2D.cpp" />
@@ -128,6 +129,7 @@
     <ClInclude Include="Bonfire.hpp" />
     <ClInclude Include="Game.hpp" />
     <ClInclude Include="GameObject.hpp" />
+    <ClInclude Include="Stone.hpp" />
     <ClInclude Include="Timer.hpp" />
     <ClInclude Include="Vector2D.hpp" />
     <ClInclude Include="PCH.hpp" />

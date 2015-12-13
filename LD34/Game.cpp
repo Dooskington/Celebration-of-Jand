@@ -5,17 +5,15 @@
 Game::Game() :
     m_isRunning(true),
     m_deltaTime(0.0),
-    m_resources(0)
+    m_resources(0),
+    m_peons(0)
 {
 }
 
 Game::~Game()
 {
     std::vector<GameObject*>::const_iterator objIt;
-    for (objIt = m_gameObjects.begin(); objIt != m_gameObjects.end(); objIt++)
-    {
-        delete *objIt;
-    }
+    m_gameObjects.clear();
 
     std::map<std::string, SDL_Texture*>::const_iterator texIt;
     for (texIt = m_textureMap.begin(); texIt != m_textureMap.end(); texIt++)
@@ -85,37 +83,60 @@ void Game::Start()
 
     // Load Textures
     LoadTexture("res/textures/man.png", "man");
+    LoadTexture("res/textures/man_2.png", "man2");
+    LoadTexture("res/textures/man_3.png", "man3");
+    LoadTexture("res/textures/man_4.png", "man4");
     LoadTexture("res/textures/tree.png", "tree");
+    LoadTexture("res/textures/log.png", "log");
+    LoadTexture("res/textures/stone.png", "stone");
+    LoadTexture("res/textures/rock.png", "rock");
     LoadTexture("res/textures/selection.png", "selection");
-    LoadTexture("res/textures/pile.png", "pile");
+    LoadTexture("res/textures/bonfire.png", "bonfire");
+    LoadTexture("res/textures/fire.png", "fire");
 
     // Load fonts
     LoadFont("res/fonts/dos.ttf", "dos");
 
     // Load Sounds
     LoadSound("res/sounds/chop.wav", "chop");
+    LoadSound("res/sounds/mine.wav", "mine");
     LoadSound("res/sounds/drop.wav", "drop");
+    LoadSound("res/sounds/die.wav", "die");
 
     // Load GameObjects
-    m_tree = new Tree(this);
-    m_tree2 = new Tree(this);
-    m_tree3 = new Tree(this);
     m_bonfire = new Bonfire(this);
-
-    m_tree->Load(Vector2D(90, 200), 32, 32, "tree");
-    m_tree2->Load(Vector2D(200, 140), 32, 32, "tree");
-    m_tree3->Load(Vector2D(320, 300), 32, 32, "tree");
-    m_bonfire->Load(Vector2D(304, 224), 32, 32, "pile");
-
-    m_gameObjects.push_back(m_tree);
-    m_gameObjects.push_back(m_tree2);
-    m_gameObjects.push_back(m_tree3);
+    m_bonfire->Load(Vector2D(304, 224), 32, 32, "bonfire");
     m_gameObjects.push_back(m_bonfire);
 
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < 6; i++)
     {
-        SpawnPeon();
+        Tree* t = new Tree(this);
+        Vector2D pos = Vector2D(rand() % (WINDOW_WIDTH - 100), rand() % (WINDOW_HEIGHT - 100));
+        
+        while (Vector2D::Distance(pos, m_bonfire->GetPosition()) < 100)
+        {
+            pos = Vector2D(rand() % (WINDOW_WIDTH - 100), rand() % (WINDOW_HEIGHT - 100));
+        }
+
+        t->Load(pos, 32, 32, "tree");
+        m_gameObjects.push_back(t);
     }
+
+    for (int i = 0; i < 3; i++)
+    {
+        Stone* s = new Stone(this);
+        Vector2D pos = Vector2D(rand() % (WINDOW_WIDTH - 100), rand() % (WINDOW_HEIGHT - 100));
+
+        while (Vector2D::Distance(pos, m_bonfire->GetPosition()) < 100)
+        {
+            pos = Vector2D(rand() % (WINDOW_WIDTH - 100), rand() % (WINDOW_HEIGHT - 100));
+        }
+
+        s->Load(pos, 32, 32, "stone");
+        m_gameObjects.push_back(s);
+    }
+
+    SpawnPeons(true);
 
     // Game loop
     double frameStartTime = 0.0;
@@ -190,6 +211,8 @@ void Game::Start()
 
 void Game::Update()
 {
+    SpawnPeons(false);
+
     for (std::vector<GameObject*>::const_iterator it = m_gameObjects.begin(); it != m_gameObjects.end(); it++)
     {
         (*it)->Update();
@@ -260,35 +283,21 @@ void Game::Render()
 
     // Draw GUI
     sstream.str("");
-    sstream << "Resources: " << m_resources;
-    RenderText("dos", 0, 0, sstream.str());
+    sstream << m_resources;
+    RenderTexture("log", -4, 40, 32, 32);
+    RenderTexture("rock", 2, 45, 32, 32);
+    RenderText("dos", 10, 75, sstream.str());
+
+    sstream.str("");
+    sstream << m_peons;
+    RenderTexture("man", 0 - 16, 0 - 32, 64, 64);
+    RenderText("dos", 8, 32, sstream.str());
 
     SDL_RenderPresent(m_renderer);
 }
 
 void Game::LeftClick()
 {
-    /*
-    // Look for a peon that we clicked on, and select it
-    for (std::vector<GameObject*>::const_iterator it = m_gameObjects.begin(); it != m_gameObjects.end(); it++)
-    {
-        GameObject* obj = *it;
-        if (obj->m_ID == "peon")
-        {
-            double x = obj->GetX();
-            double y = obj->GetY();
-            double w = obj->GetWidth();
-            double h = obj->GetHeight();
-
-            // Check if the selection contains that unit
-            if (mouseX > x && mouseY > y && mouseX < (x + w) && mouseY < (y + w))
-            {
-                m_selectedPeons.push_back(dynamic_cast<Peon*>(obj));
-            }
-        }
-    }
-    */
-
     m_selectedPeons.clear();
 }
 
@@ -302,11 +311,6 @@ void Game::LeftClickUp()
             GameObject* obj = *it;
             if (obj->m_ID == "peon")
             {
-                double x = obj->GetPosition().GetX();
-                double y = obj->GetPosition().GetY();
-                double w = obj->GetWidth();
-                double h = obj->GetHeight();
-
                 // Check if the selection contains that unit
                 if (CheckCollision(m_selectionRect, obj->GetHitBox()))
                 {
@@ -321,39 +325,20 @@ void Game::LeftClickUp()
 
 void Game::RightClick()
 {
-    for (std::vector<Peon*>::const_iterator it = m_selectedPeons.begin(); it != m_selectedPeons.end(); it++)
+    GameObject* obj = nullptr;
+    for (std::vector<GameObject*>::const_iterator objIt = m_gameObjects.begin(); objIt != m_gameObjects.end(); objIt++)
     {
-        CommandPeon(*it, nullptr);
-    }
-
-    /*
-    if (m_selectedPeons.size() > 0)
-    {
-        for (std::vector<GameObject*>::const_iterator objIt = m_gameObjects.begin(); objIt != m_gameObjects.end(); objIt++)
+        SDL_Rect mouseRect = { mouseX - 5, mouseY - 5, 10, 10 };
+        if (CheckCollision(mouseRect, (*objIt)->GetHitBox()))
         {
-            GameObject* obj = *objIt;
-            if (obj->m_ID == "tree")
+            if ((*objIt)->m_ID == "tree" || (*objIt)->m_ID == "stone" || (*objIt)->m_ID == "bonfire")
             {
-                double x = obj->GetPosition().GetX();
-                double y = obj->GetPosition().GetY();
-                double w = obj->GetWidth();
-                double h = obj->GetHeight();
-
-                SDL_Rect mouseRect = { mouseX, mouseY, 5, 5 };
-
-
-                if (CheckCollision(mouseRect, obj->GetHitBox()))
-                {
-                    for (std::vector<Peon*>::const_iterator it = m_selectedPeons.begin(); it != m_selectedPeons.end(); it++)
-                    {
-                        //CommandPeon(*it, *objIt);
-                        //(*it)->m_job = (*it)->LUMBERJACK;
-                    }
-                }
+                obj = (*objIt);
             }
         }
     }
-    */
+
+    CommandPeons(obj);
 }
 
 void Game::RightClickUp()
@@ -455,19 +440,77 @@ Tree* Game::FindTree(Peon* peon)
     return tree;
 }
 
-void Game::SpawnPeon()
+void Game::SpawnPeons(bool initial)
 {
-    Vector2D position(rand() % WINDOW_WIDTH, rand() % WINDOW_HEIGHT);
-    int width = 32;
-    int height = 32;
-    Peon* obj = new Peon(this, position, width, height, "man");
-    m_gameObjects.push_back(obj);
+    for (int i = 0; i < m_peonsToSpawn; i++)
+    {
+        Peon* obj;
+        Vector2D position(rand() % WINDOW_WIDTH, -(rand() % 100));
+        Vector2D dest(rand() % (WINDOW_WIDTH - 100), rand() % (WINDOW_HEIGHT - 100));
+        int width = 32;
+        int height = 32;
+
+        if (!initial)
+        {
+            obj = new Peon(this, position, width, height, "man");
+            obj->dest = dest;
+            obj->m_state = Peon::WALKING;
+        }
+        else
+        {
+            obj = new Peon(this, dest, width, height, "man");
+            obj->m_state = Peon::IDLE;
+        }
+
+        m_gameObjects.push_back(obj);
+        m_peons++;
+    }
+
+    m_peonsToSpawn = 0;
 }
 
-void Game::CommandPeon(Peon* peon, GameObject* target)
+void Game::SacrificePeon(Peon* peon)
 {
-    peon->m_state = peon->WALKING;
-    peon->dest = Vector2D(mouseX, mouseY);
+    if (m_resources >= 100)
+    {
+        PlaySound("die");
+
+        // Recycle this peon
+        peon->Respawn();
+
+        // Spawn a second one
+        m_peonsToSpawn++;
+
+        m_resources -= 100;
+    }
+    else
+    {
+        peon->m_state = Peon::IDLE;
+    }
+
+    m_selectedPeons.clear();
+}
+
+void Game::CommandPeons(GameObject* target)
+{
+    for (std::vector<Peon*>::const_iterator it = m_selectedPeons.begin(); it != m_selectedPeons.end(); it++)
+    {
+        (*it)->m_state = Peon::IDLE;
+        (*it)->m_targetResource = target;
+        (*it)->m_isWandering = false;
+        if (target == nullptr)
+        {
+            (*it)->dest = Vector2D(mouseX - 16, mouseY - 16);
+            (*it)->m_state = Peon::WALKING;
+        }
+        else
+        {
+            if (target->m_ID == "bonfire")
+            {
+                (*it)->m_state = Peon::SACRIFICE;
+            }
+        }
+    }
 }
 
 void Game::DepositResources(int amount)
@@ -499,7 +542,7 @@ bool Game::LoadTexture(const std::string& path, const std::string& id)
 
 void Game::RenderTexture(const std::string& id, const double& x, const double& y, const double& width, const double& height)
 {
-    SDL_Rect srcRect = { 0, 0, width, height };
+    SDL_Rect srcRect = { 0, 0, 32, 32 };
     SDL_Rect destRect = { x, y, width, height };
 
     SDL_RenderCopyEx(m_renderer, m_textureMap[id], &srcRect, &destRect, 0, 0, SDL_FLIP_NONE);

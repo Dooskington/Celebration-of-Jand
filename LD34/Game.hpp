@@ -2,6 +2,7 @@
 #include "PCH.hpp"
 #include "Peon.hpp"
 #include "Tree.hpp"
+#include "Stone.hpp"
 #include "Bonfire.hpp"
 
 class Game
@@ -21,8 +22,9 @@ class Game
 
         Bonfire* FindBonfire(Peon* peon);
         Tree* FindTree(Peon* peon);
-        void SpawnPeon();
-        void CommandPeon(Peon* peon, GameObject* target);
+        void SpawnPeons(bool initial);
+        void SacrificePeon(Peon* peon);
+        void CommandPeons(GameObject* target);
         void DepositResources(int amount);
 
         bool CheckCollision(SDL_Rect a, SDL_Rect b);
@@ -49,7 +51,7 @@ class Game
         SDL_Rect m_selectionRect;
 
     private:
-        const std::string WINDOW_TITLE = "LD34";
+        const std::string WINDOW_TITLE = "LD34 - Celebration Of Jand";
         const int WINDOW_WIDTH = 640;
         const int WINDOW_HEIGHT = 480;
 
@@ -74,21 +76,13 @@ class Game
 
         // GameObjects
         std::vector<GameObject*> m_gameObjects;
-
-        GameObject* m_peon;
-        GameObject* m_peon2;
-        GameObject* m_peon3;
-        GameObject* m_peon4;
-        GameObject* m_peon5;
-        GameObject* m_peon6;
-        GameObject* m_peon7;
-        GameObject* m_tree;
-        GameObject* m_tree2;
-        GameObject* m_tree3;
         GameObject* m_bonfire;
 
         std::vector<Peon*> m_selectedPeons;
 
         std::stringstream sstream;
         int m_resources;
+        int m_peons;
+
+        int m_peonsToSpawn = 10;
 };
