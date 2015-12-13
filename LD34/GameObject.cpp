@@ -20,7 +20,7 @@ void GameObject::Update()
 
 void GameObject::Render() 
 { 
-    m_game->DrawTexture(m_textureID, m_position.GetX(), m_position.GetY(), m_width, m_height);
+    m_game->RenderTexture(m_textureID, m_position.GetX(), m_position.GetY(), m_width, m_height);
 }
 
 void GameObject::Clean()

@@ -11,7 +11,6 @@ class Game
         ~Game();
 
         void Start();
-        void Stop();
         void Update();
         void ProcessInput();
         void Render();
@@ -22,13 +21,19 @@ class Game
 
         Bonfire* FindBonfire(Peon* peon);
         Tree* FindTree(Peon* peon);
+        void SpawnPeon();
         void CommandPeon(Peon* peon, GameObject* target);
+        void DepositResources(int amount);
 
         bool CheckCollision(SDL_Rect a, SDL_Rect b);
 
         // Textures
         bool LoadTexture(const std::string& path, const std::string& id);
-        void DrawTexture(const std::string& id, const double& x, const double& y, const double& width, const double& height);
+        void RenderTexture(const std::string& id, const double& x, const double& y, const double& width, const double& height);
+
+        // Fonts
+        bool LoadFont(const std::string& path, const std::string& id);
+        void RenderText(const std::string& fontID, const double& x, const double& y, const std::string& text, SDL_Color color = {0, 0, 0, 255});
 
         // Sounds
         bool LoadSound(const std::string& path, const std::string& id);
@@ -41,10 +46,6 @@ class Game
         int mouseY;
 
         bool m_selecting = false;
-        int m_selectionStartX;
-        int m_selectionStartY;
-        int m_selectionEndX;
-        int m_selectionEndY;
         SDL_Rect m_selectionRect;
 
     private:
@@ -65,6 +66,9 @@ class Game
         // Textures
         std::map<std::string, SDL_Texture*> m_textureMap;
         
+        // Fonts
+        std::map<std::string, TTF_Font*> m_fontMap;
+
         // Sounds
         std::map<std::string, Mix_Chunk*> m_soundMap;
 
@@ -84,4 +88,7 @@ class Game
         GameObject* m_bonfire;
 
         std::vector<Peon*> m_selectedPeons;
+
+        std::stringstream sstream;
+        int m_resources;
 };

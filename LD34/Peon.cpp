@@ -2,12 +2,17 @@
 #include "Peon.hpp"
 #include "Game.hpp"
 
-Peon::Peon(Game* game) :
+Peon::Peon(Game* game, const Vector2D& position, const int& width, const int& height, const std::string& textureID) :
     m_state(IDLE),
     move(false),
     dest(0, 0),
     m_tree(nullptr)
 {
+    m_position = position;
+    m_width = width;
+    m_height = height;
+    m_textureID = textureID;
+
     m_game = game;
     m_ID = "peon";
 
@@ -58,6 +63,11 @@ void Peon::MoveTo(Vector2D dest)
 
 void Peon::IdleState()
 {
+    if (m_bonfire == nullptr)
+    {
+        m_bonfire = m_game->FindBonfire(this);
+    }
+
     // We are idle, find a tree to start chopping.
     if (m_tree == nullptr)
     {
@@ -73,20 +83,31 @@ void Peon::IdleState()
 
 void Peon::WalkingState()
 {
+    if (m_chopTimer.IsStarted())
+    {
+        m_chopTimer.Stop();
+    }
+
     // Walk to our destination.
     MoveTo(dest);
 
     // If we have reached our destination, begin the next action
     if (m_position == dest)
     {
-        if (!m_hasLogs)
+        if (dest == m_tree->GetPosition())
         {
             m_state = CHOPPING;
         }
-        else
+        else if (dest == m_bonfire->GetPosition())
         {
+            m_game->DepositResources(m_resources);
+            m_resources = 0;
             m_game->PlaySound("drop");
             m_hasLogs = false;
+            m_state = IDLE;
+        }
+        else
+        {
             m_state = IDLE;
         }
     }
@@ -104,19 +125,17 @@ void Peon::ChoppingState()
     {
         m_chopTimer.Stop();
         m_game->PlaySound("chop");
-        chopCount++;
+        m_resources+= 1;
     }
 
-    if (chopCount >= 5)
+    if (m_resources >= 5)
     {
         // We have chopped the tree enough. Give this dude some logs.
         m_hasLogs = true;
-        chopCount = 0;
     }
 
     if (m_hasLogs == true)
     {
-        m_bonfire = m_game->FindBonfire(this);
         if (m_bonfire != nullptr)
         {
             dest = m_bonfire->GetPosition();

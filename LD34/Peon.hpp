@@ -8,7 +8,7 @@
 class Peon : public GameObject
 {
 public:
-    Peon(Game* game);
+    Peon(Game* game, const Vector2D& position, const int& width, const int& height, const std::string& textureID);
 
     void Update();
     void Render();
@@ -35,7 +35,7 @@ public:
 
     int soundDelay;
     Timer m_chopTimer;
-    int chopCount;
+    int m_resources;
     bool m_hasLogs = false;
 
 private:

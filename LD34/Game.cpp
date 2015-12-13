@@ -4,7 +4,8 @@
 
 Game::Game() :
     m_isRunning(true),
-    m_deltaTime(0.0)
+    m_deltaTime(0.0),
+    m_resources(0)
 {
 }
 
@@ -22,11 +23,24 @@ Game::~Game()
         SDL_DestroyTexture(texIt->second);
     }
 
+    std::map<std::string, TTF_Font*>::const_iterator fontIt;
+    for (fontIt = m_fontMap.begin(); fontIt != m_fontMap.end(); fontIt++)
+    {
+        TTF_CloseFont(fontIt->second);
+    }
+
     std::map<std::string, Mix_Chunk*>::const_iterator soundIt;
     for (soundIt = m_soundMap.begin(); soundIt != m_soundMap.end(); soundIt++)
     {
         Mix_FreeChunk(soundIt->second);
     }
+
+    SDL_DestroyRenderer(m_renderer);
+    SDL_DestroyWindow(m_window);
+
+    SDL_Quit();
+    Mix_Quit();
+    TTF_Quit();
 }
 
 void Game::Start()
@@ -75,30 +89,19 @@ void Game::Start()
     LoadTexture("res/textures/selection.png", "selection");
     LoadTexture("res/textures/pile.png", "pile");
 
+    // Load fonts
+    LoadFont("res/fonts/dos.ttf", "dos");
+
     // Load Sounds
     LoadSound("res/sounds/chop.wav", "chop");
     LoadSound("res/sounds/drop.wav", "drop");
 
     // Load GameObjects
-    m_peon = new Peon(this);
-    m_peon2 = new Peon(this);
-    m_peon3 = new Peon(this);
-    m_peon4 = new Peon(this);
-    m_peon5 = new Peon(this);
-    m_peon6 = new Peon(this);
-    m_peon7 = new Peon(this);
     m_tree = new Tree(this);
     m_tree2 = new Tree(this);
     m_tree3 = new Tree(this);
     m_bonfire = new Bonfire(this);
 
-    m_peon->Load(Vector2D(128, 128), 32, 32, "man");
-    m_peon2->Load(Vector2D(192, 64), 32, 32, "man");
-    m_peon3->Load(Vector2D(256, 64), 32, 32, "man");
-    m_peon4->Load(Vector2D(400, 300), 32, 32, "man");
-    m_peon5->Load(Vector2D(300, 300), 32, 32, "man");
-    m_peon6->Load(Vector2D(128, 32), 32, 32, "man");
-    m_peon7->Load(Vector2D(32, 328), 32, 32, "man");
     m_tree->Load(Vector2D(90, 200), 32, 32, "tree");
     m_tree2->Load(Vector2D(200, 140), 32, 32, "tree");
     m_tree3->Load(Vector2D(320, 300), 32, 32, "tree");
@@ -108,13 +111,11 @@ void Game::Start()
     m_gameObjects.push_back(m_tree2);
     m_gameObjects.push_back(m_tree3);
     m_gameObjects.push_back(m_bonfire);
-    m_gameObjects.push_back(m_peon);
-    m_gameObjects.push_back(m_peon2);
-    m_gameObjects.push_back(m_peon3);
-    m_gameObjects.push_back(m_peon4);
-    m_gameObjects.push_back(m_peon5);
-    m_gameObjects.push_back(m_peon6);
-    m_gameObjects.push_back(m_peon7);
+
+    for (int i = 0; i < 10; i++)
+    {
+        SpawnPeon();
+    }
 
     // Game loop
     double frameStartTime = 0.0;
@@ -185,17 +186,6 @@ void Game::Start()
         Update();
         Render();
     }
-
-    Stop();
-}
-
-void Game::Stop()
-{
-    SDL_DestroyRenderer(m_renderer);
-    SDL_DestroyWindow(m_window);
-
-    SDL_Quit();
-    Mix_Quit();
 }
 
 void Game::Update()
@@ -234,20 +224,15 @@ void Game::ProcessInput()
         if (!m_selecting)
         {
             m_selecting = true;
-            m_selectionStartX = mouseX;
-            m_selectionStartY = mouseY;
+
+            m_selectionRect.x = mouseX;
+            m_selectionRect.y = mouseY;
         }
         
         if (m_selecting)
         {
-            m_selectionEndX = mouseX - m_selectionStartX;
-            m_selectionEndY = mouseY - m_selectionStartY;
-
-            // Construct selection box
-            m_selectionRect.x = m_selectionStartX;
-            m_selectionRect.y = m_selectionStartY;
-            m_selectionRect.w = m_selectionEndX;
-            m_selectionRect.h = m_selectionEndY;
+            m_selectionRect.w = mouseX - m_selectionRect.x;
+            m_selectionRect.h = mouseY - m_selectionRect.y;
         }
     }
 }
@@ -260,26 +245,23 @@ void Game::Render()
     for (std::vector<GameObject*>::const_iterator it = m_gameObjects.begin(); it != m_gameObjects.end(); it++)
     {
         (*it)->Render();
-        //SDL_Rect rect = (*it)->GetHitBox();
-        //SDL_SetRenderDrawColor(m_renderer, 255, 0, 0, 255);
-        //SDL_RenderDrawRect(m_renderer, &rect);
     }
 
     for (std::vector<Peon*>::const_iterator it = m_selectedPeons.begin(); it != m_selectedPeons.end(); it++)
     {
-        //SDL_Rect rect = { (*it)->GetX(), (*it)->GetY() , (*it)->GetWidth(), (*it)->GetHeight() };
-        //SDL_Rect rect = (*it)->GetHitBox();
-        //SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
-        //SDL_RenderDrawRect(m_renderer, &rect);
-        DrawTexture("selection", (*it)->GetPosition().GetX(), (*it)->GetPosition().GetY(), (*it)->GetWidth(), (*it)->GetHeight());
+        RenderTexture("selection", (*it)->GetPosition().GetX(), (*it)->GetPosition().GetY(), (*it)->GetWidth(), (*it)->GetHeight());
     }
 
     if (m_selecting)
     {
-        //SDL_Rect rect = { m_selectionStartX, m_selectionStartY , m_selectionEndX - m_selectionStartX, m_selectionEndY - m_selectionStartY };
         SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
         SDL_RenderDrawRect(m_renderer, &m_selectionRect);
     }
+
+    // Draw GUI
+    sstream.str("");
+    sstream << "Resources: " << m_resources;
+    RenderText("dos", 0, 0, sstream.str());
 
     SDL_RenderPresent(m_renderer);
 }
@@ -339,6 +321,12 @@ void Game::LeftClickUp()
 
 void Game::RightClick()
 {
+    for (std::vector<Peon*>::const_iterator it = m_selectedPeons.begin(); it != m_selectedPeons.end(); it++)
+    {
+        CommandPeon(*it, nullptr);
+    }
+
+    /*
     if (m_selectedPeons.size() > 0)
     {
         for (std::vector<GameObject*>::const_iterator objIt = m_gameObjects.begin(); objIt != m_gameObjects.end(); objIt++)
@@ -353,6 +341,7 @@ void Game::RightClick()
 
                 SDL_Rect mouseRect = { mouseX, mouseY, 5, 5 };
 
+
                 if (CheckCollision(mouseRect, obj->GetHitBox()))
                 {
                     for (std::vector<Peon*>::const_iterator it = m_selectedPeons.begin(); it != m_selectedPeons.end(); it++)
@@ -364,6 +353,7 @@ void Game::RightClick()
             }
         }
     }
+    */
 }
 
 void Game::RightClickUp()
@@ -465,9 +455,24 @@ Tree* Game::FindTree(Peon* peon)
     return tree;
 }
 
+void Game::SpawnPeon()
+{
+    Vector2D position(rand() % WINDOW_WIDTH, rand() % WINDOW_HEIGHT);
+    int width = 32;
+    int height = 32;
+    Peon* obj = new Peon(this, position, width, height, "man");
+    m_gameObjects.push_back(obj);
+}
+
 void Game::CommandPeon(Peon* peon, GameObject* target)
 {
+    peon->m_state = peon->WALKING;
     peon->dest = Vector2D(mouseX, mouseY);
+}
+
+void Game::DepositResources(int amount)
+{
+    m_resources += amount;
 }
 
 bool Game::LoadTexture(const std::string& path, const std::string& id)
@@ -492,12 +497,51 @@ bool Game::LoadTexture(const std::string& path, const std::string& id)
     return true;
 }
 
-void Game::DrawTexture(const std::string& id, const double& x, const double& y, const double& width, const double& height)
+void Game::RenderTexture(const std::string& id, const double& x, const double& y, const double& width, const double& height)
 {
     SDL_Rect srcRect = { 0, 0, width, height };
     SDL_Rect destRect = { x, y, width, height };
 
     SDL_RenderCopyEx(m_renderer, m_textureMap[id], &srcRect, &destRect, 0, 0, SDL_FLIP_NONE);
+}
+
+bool Game::LoadFont(const std::string& path, const std::string& id)
+{
+    TTF_Font* font = TTF_OpenFont(path.c_str(), 16);
+    if (font == nullptr)
+    {
+        std::cerr << "Failed to load font! SDL_ttf error: " << TTF_GetError() << std::endl;
+    }
+
+    std::cout << "Font " << id << " loaded." << std::endl;
+    m_fontMap[id] = font;
+    return true;
+}
+
+void Game::RenderText(const std::string& fontID, const double& x, const double& y, const std::string& text, SDL_Color color)
+{
+    SDL_Surface* surface = TTF_RenderText_Solid(m_fontMap[fontID], text.c_str(), color);
+    if (surface == nullptr)
+    {
+        std::cerr << "Failed to render font to surface! SDL_ttf error: " << TTF_GetError() << std::endl;
+    }
+
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(m_renderer, surface);
+    int width;
+    int height;
+    SDL_QueryTexture(texture, NULL, NULL, &width, &height);
+    if (texture == nullptr)
+    {
+        std::cout << "Failed to create texture from surface! SDL error: " << SDL_GetError() << std::endl;
+    }
+
+    SDL_Rect srcRect = { 0, 0, width, height };
+    SDL_Rect destRect = { x, y, width, height };
+
+    SDL_RenderCopyEx(m_renderer, texture, &srcRect, &destRect, 0, 0, SDL_FLIP_NONE);
+
+    SDL_FreeSurface(surface);
+    SDL_DestroyTexture(texture);
 }
 
 bool Game::LoadSound(const std::string& path, const std::string& id)
