@@ -11,6 +11,8 @@ Using your mouse, you can left click to select individual peons, or do a box sel
 
 To gain additional peons, you can sacrifice one peon and 100 resources by selecting a peon and right clicking on the bonfire.
 
+http://dooskington.com/ludum-dare-34-postmortem-celebration-of-jand/
+
 ### Compiling
 
 To compile on Windows, use the Visual Studio project.
