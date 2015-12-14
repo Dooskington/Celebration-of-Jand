@@ -516,6 +516,7 @@ void Game::CommandPeons(GameObject* target)
 {
     for (std::vector<Peon*>::const_iterator it = m_selectedPeons.begin(); it != m_selectedPeons.end(); it++)
     {
+        (*it)->m_isWandering = false;
         if (target == nullptr)
         {
             (*it)->dest = Vector2D(mouseX - 16, mouseY - 16);
@@ -528,7 +529,6 @@ void Game::CommandPeons(GameObject* target)
             {
                 (*it)->m_state = Peon::IDLE;
                 (*it)->m_targetResource = target;
-                (*it)->m_isWandering = false;
             }
 
             if (target->m_ID == "bonfire")

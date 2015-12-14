@@ -55,7 +55,6 @@ class Game
         const std::string WINDOW_TITLE = "LD34 - Celebration Of Jand";
         const int WINDOW_WIDTH = 640;
         const int WINDOW_HEIGHT = 480;
-
         bool m_isRunning;
 
         SDL_Window* m_window;
