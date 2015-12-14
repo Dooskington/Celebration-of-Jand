@@ -11,7 +11,32 @@ Bonfire::Bonfire(Game* game)
 void Bonfire::Update()
 {
     GameObject::Update();
-    //m_game->RenderTexture(m_textureID, m_position.GetX(), m_position.GetY(), m_width, m_height);
+    
+    int resources = m_game->GetResources();
+    if (resources <= 50)
+    {
+        m_textureID = "bonfire_0";
+    }
+    else if (resources <= 400)
+    {
+        m_textureID = "bonfire_1";
+    }
+    else if (resources <= 1000)
+    {
+        m_textureID = "bonfire_2";
+    }
+    else if (resources <= 2000)
+    {
+        m_textureID = "bonfire_3";
+    }
+    else if (resources > 2000)
+    {
+        m_textureID = "bonfire_4";
+    }
+    else
+    {
+        m_textureID = "bonfire_0";
+    }
 }
 
 void Bonfire::Render()

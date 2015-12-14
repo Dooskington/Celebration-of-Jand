@@ -26,6 +26,7 @@ class Game
         void SacrificePeon(Peon* peon);
         void CommandPeons(GameObject* target);
         void DepositResources(int amount);
+        int GetResources() const;
 
         bool CheckCollision(SDL_Rect a, SDL_Rect b);
 

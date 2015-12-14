@@ -129,6 +129,7 @@
     <ClInclude Include="Bonfire.hpp" />
     <ClInclude Include="Game.hpp" />
     <ClInclude Include="GameObject.hpp" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="Stone.hpp" />
     <ClInclude Include="Timer.hpp" />
     <ClInclude Include="Vector2D.hpp" />

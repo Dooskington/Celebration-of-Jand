@@ -12,7 +12,6 @@ Game::Game() :
 
 Game::~Game()
 {
-    std::vector<GameObject*>::const_iterator objIt;
     m_gameObjects.clear();
 
     std::map<std::string, SDL_Texture*>::const_iterator texIt;
@@ -80,6 +79,15 @@ void Game::Start()
     {
         std::cerr << "Renderer could not be created! SDL error: " << SDL_GetError() << std::endl;
     }
+    
+    // Load application icon
+    SDL_Surface* tempSurface = IMG_Load("res/textures/icon.png");
+    if (tempSurface == nullptr)
+    {
+        std::cerr << "Unable to load image " << "res/textures/icon.png" << "! SDL_image error: " << IMG_GetError() << std::endl;
+    }
+    SDL_SetWindowIcon(m_window, tempSurface);
+    SDL_FreeSurface(tempSurface);
 
     // Load Textures
     LoadTexture("res/textures/man.png", "man");
@@ -91,8 +99,13 @@ void Game::Start()
     LoadTexture("res/textures/stone.png", "stone");
     LoadTexture("res/textures/rock.png", "rock");
     LoadTexture("res/textures/selection.png", "selection");
-    LoadTexture("res/textures/bonfire.png", "bonfire");
+    LoadTexture("res/textures/bonfire_0.png", "bonfire_0");
+    LoadTexture("res/textures/bonfire_1.png", "bonfire_1");
+    LoadTexture("res/textures/bonfire_2.png", "bonfire_2");
+    LoadTexture("res/textures/bonfire_3.png", "bonfire_3");
+    LoadTexture("res/textures/bonfire_4.png", "bonfire_4");
     LoadTexture("res/textures/fire.png", "fire");
+    LoadTexture("res/textures/grass.png", "grass");
 
     // Load fonts
     LoadFont("res/fonts/dos.ttf", "dos");
@@ -264,6 +277,14 @@ void Game::Render()
 {
     SDL_SetRenderDrawColor(m_renderer, 133, 222, 80, 255);
     SDL_RenderClear(m_renderer);
+
+    for (int x = 0; x < (WINDOW_WIDTH / 32); x++)
+    {
+        for (int y = 0; y < (WINDOW_HEIGHT / 32); y++)
+        {
+            RenderTexture("grass", x * 32, y * 32, 32, 32);
+        }
+    }
 
     for (std::vector<GameObject*>::const_iterator it = m_gameObjects.begin(); it != m_gameObjects.end(); it++)
     {
@@ -495,27 +516,38 @@ void Game::CommandPeons(GameObject* target)
 {
     for (std::vector<Peon*>::const_iterator it = m_selectedPeons.begin(); it != m_selectedPeons.end(); it++)
     {
-        (*it)->m_state = Peon::IDLE;
-        (*it)->m_targetResource = target;
-        (*it)->m_isWandering = false;
         if (target == nullptr)
         {
             (*it)->dest = Vector2D(mouseX - 16, mouseY - 16);
+            (*it)->m_targetResource = nullptr;
             (*it)->m_state = Peon::WALKING;
         }
         else
         {
+            if ((*it)->m_targetResource != target)
+            {
+                (*it)->m_state = Peon::IDLE;
+                (*it)->m_targetResource = target;
+                (*it)->m_isWandering = false;
+            }
+
             if (target->m_ID == "bonfire")
             {
                 (*it)->m_state = Peon::SACRIFICE;
             }
         }
+
     }
 }
 
 void Game::DepositResources(int amount)
 {
     m_resources += amount;
+}
+
+int Game::GetResources() const
+{
+    return m_resources;
 }
 
 bool Game::LoadTexture(const std::string& path, const std::string& id)
