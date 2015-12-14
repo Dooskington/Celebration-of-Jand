@@ -32,11 +32,11 @@ class Game
 
         // Textures
         bool LoadTexture(const std::string& path, const std::string& id);
-        void RenderTexture(const std::string& id, const double& x, const double& y, const double& width, const double& height);
+        void RenderTexture(const std::string& id, const int& x, const int& y, const int& width, const int& height);
 
         // Fonts
         bool LoadFont(const std::string& path, const std::string& id);
-        void RenderText(const std::string& fontID, const double& x, const double& y, const std::string& text, SDL_Color color = {0, 0, 0, 255});
+        void RenderText(const std::string& fontID, const int& x, const int& y, const std::string& text, SDL_Color color = {0, 0, 0, 255});
 
         // Sounds
         bool LoadSound(const std::string& path, const std::string& id);
@@ -67,7 +67,7 @@ class Game
 
         // Textures
         std::map<std::string, SDL_Texture*> m_textureMap;
-        
+
         // Fonts
         std::map<std::string, TTF_Font*> m_fontMap;
 

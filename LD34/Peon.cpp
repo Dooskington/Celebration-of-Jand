@@ -68,7 +68,7 @@ void Peon::Update()
 
 void Peon::Render()
 {
-    if (m_state == WALKING)
+    if (m_state == WALKING || m_state == SACRIFICE)
     {
         hopIndex += m_game->m_deltaTime;
         hopOffset = -(hopAmp * sin(hopFreq * hopIndex));

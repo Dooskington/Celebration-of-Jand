@@ -3,8 +3,8 @@
 #include "Vector2D.hpp"
 
 Game::Game() :
-    m_isRunning(true),
     m_deltaTime(0.0),
+    m_isRunning(true),
     m_resources(0),
     m_peons(0)
 {
@@ -79,7 +79,7 @@ void Game::Start()
     {
         std::cerr << "Renderer could not be created! SDL error: " << SDL_GetError() << std::endl;
     }
-    
+
     // Load application icon
     SDL_Surface* tempSurface = IMG_Load("res/textures/icon.png");
     if (tempSurface == nullptr)
@@ -125,7 +125,7 @@ void Game::Start()
     {
         Tree* t = new Tree(this);
         Vector2D pos = Vector2D(rand() % (WINDOW_WIDTH - 100), rand() % (WINDOW_HEIGHT - 100));
-        
+
         while (Vector2D::Distance(pos, m_bonfire->GetPosition()) < 100)
         {
             pos = Vector2D(rand() % (WINDOW_WIDTH - 100), rand() % (WINDOW_HEIGHT - 100));
@@ -244,7 +244,7 @@ void Game::ProcessInput()
     {
         RightClick();
     }
-    
+
     if (m_buttonsUp[SDL_BUTTON_LEFT])
     {
         LeftClickUp();
@@ -264,7 +264,7 @@ void Game::ProcessInput()
             m_selectionRect.x = mouseX;
             m_selectionRect.y = mouseY;
         }
-        
+
         if (m_selecting)
         {
             m_selectionRect.w = mouseX - m_selectionRect.x;
@@ -406,7 +406,7 @@ bool Game::CheckCollision(SDL_Rect a, SDL_Rect b)
         topB = bottomB;
         bottomB = temp;
     }
-    
+
 
     if (rightA > leftB && leftA < rightB)
     {
@@ -572,7 +572,7 @@ bool Game::LoadTexture(const std::string& path, const std::string& id)
     return true;
 }
 
-void Game::RenderTexture(const std::string& id, const double& x, const double& y, const double& width, const double& height)
+void Game::RenderTexture(const std::string& id, const int& x, const int& y, const int& width, const int& height)
 {
     SDL_Rect srcRect = { 0, 0, 32, 32 };
     SDL_Rect destRect = { x, y, width, height };
@@ -593,7 +593,7 @@ bool Game::LoadFont(const std::string& path, const std::string& id)
     return true;
 }
 
-void Game::RenderText(const std::string& fontID, const double& x, const double& y, const std::string& text, SDL_Color color)
+void Game::RenderText(const std::string& fontID, const int& x, const int& y, const std::string& text, SDL_Color color)
 {
     SDL_Surface* surface = TTF_RenderText_Solid(m_fontMap[fontID], text.c_str(), color);
     if (surface == nullptr)
