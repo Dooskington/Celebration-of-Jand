@@ -13,6 +13,8 @@ Using your mouse, you can left click to select individual peons, or do a box sel
 
 To gain additional peons, you can sacrifice one peon and 100 resources by selecting a peon and right clicking on the bonfire.
 
+Development began in December 2015.
+
 I wrote an article on the game [here](http://dooskington.com/ludum-dare-34-postmortem-celebration-of-jand/)
 
 Technology     | Purpose
